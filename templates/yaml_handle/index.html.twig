@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test Dunforce{% endblock %}
+
+{% block body %}
+    <div class="container-fluid pl-0 pr-0">
+          <h1>Test Dunforce</h1>
+    </div>
+
+    <div class="container">
+        <div class="button-addorga">
+            <a href="javascript:void(0);" data-toggle="modal" data-target="#addOrga">
+                Ajouter une organisation
+            </a>
+        </div>
+
+        {% for messages in app.flashes('Error') %}
+            {% for key, message in messages %}
+                <div class="error-form">
+                    <span class="invalid-feedback" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>{{ key|replace({'[': "", ']': ""}) }} - {{ message }}</strong>
+                    </span>
+                    
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        <table>
+            {% for organisation in organizations %}
+                {% for one_orga in organisation %}
+                    <tr id="{{ one_orga.name }}">
+                        <td id="orgaName">{{ one_orga.name }}</td>
+                        <td id="orgaDescription">{{ one_orga.description }}</td>
+                        <td>
+                            <div class="link_modification">
+                                <a title="Edit the organization" href="javascript:void(0);" id="editOrga" class="editOrga" data-organame="{{ one_orga.name }}" data-toggle="modal" data-target="#editOrga{{ one_orga.name }}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a title="List of users" href="javascript:void(0);" id="usersOrga" data-organame="{{ one_orga.name }}" data-toggle="modal" data-target="#usersOrga{{ one_orga.name }}">
+                                    <i class="fas fa-users"></i>
+                                </a>
+                                <a title="Delete the organization" href="{{ path('deleteOrga', {'name': one_orga.name}) }}" id="deleteOrga" onclick="return confirm('Are you sure?');">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Modal Edit Orga-->
+                    <div class="modal fade step-modal" id="editOrga{{ one_orga.name }}" tabindex="-1" role="dialog" aria-labelledby="editOrgaLabel{{ one_orga.name }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editOrgaLabel{{ one_orga.name }}">Modifier une organisation</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        &times;
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ path ('editOrga', {'name': one_orga.name }) }}" method="post">
+                                        <input type="hidden" name="token" value="{{ csrf_token('editOrga') }}"/>
+                                        <div class="form-group">
+                                            <label for="editname_orga">Nom de l'organisation</label>
+                                            <input type="text" name="editname_orga" class="form-control" value="{{ one_orga.name }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="editdescription_orga">Description de l'organisation</label>
+                                            <textarea name="editdescription_orga" class="form-control" required>{{ one_orga.description }}</textarea>
+                                        </div>
+                                        <div class="form-group button-submit">
+                                            <button type="submit">Modifier</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Users Orga-->
+                    <div class="modal fade step-modal" id="usersOrga{{ one_orga.name }}" tabindex="0" role="dialog" aria-labelledby="usersOrgaLabel{{ one_orga.name }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-users" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="usersOrgaLabel{{ one_orga.name }}">Gestion des Utilisateurs</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        &times;
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+
+                                    <div class="errors-ajax" style="display: none;">
+                                        <span class="invalid-feedback errors-ajax-invalid-feedback" role="alert"></span>
+                                    </div>
+
+                                    <div id="formAddUser" class="form-adduser" {% if one_orga.users is empty %} style="display: block;" {% endif %}>
+                                        <form id="addUserFormFields{{ one_orga.name }}" class="add-user-form-fields" method="post" data-organame="{{ one_orga.name }}">
+                                            <input type="hidden" name="token" value="{{ csrf_token('addUser') }}"/>
+                                            <div class="form-group">
+                                                <label for="name_userorga">Nom de l'utilisateur</label>
+                                                <input type="text" name="name_userorga" class="form-control"required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="role_userorga">Rôle(s) de l'utilisateur</label>
+                                                <input type="text" name="role_userorga" class="form-control" placeholder="ADMIN,CEO" required>
+                                            </div>
+                                            <div class="form-group button-submit">
+                                                <a href="javascript:void(0);" id="cancelAddUser" class="cancel-action">Annuler</a>
+                                                <button type="submit">Ajouter</button>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <div id="listUserOrga" class="list-usersorga list-usersorga{{ one_orga.name }}" {% if one_orga.users is not empty %} style="display: block;" {% endif %}>
+                                        {% if one_orga.users is not empty %}
+                                            <div class="user-form">
+                                                <strong>Utilisateurs de {{ one_orga.name }}</strong>
+                                                <div class="user-addorga">
+                                                    <a href="javascript:void(0);" id="addUserFormDisplayed">
+                                                        Ajouter un utilisateur
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        {% for user in one_orga.users %}
+                                            <div id="oneUser{{ one_orga.name }}{{ user.name }}" class="oneuser-orga">
+                                                <h5>
+                                                    <strong id="nameUserTitle{{ one_orga.name }}{{ user.name }}">{{ user.name }}</strong>
+                                                </h5>
+                                                <form method="post" id="editUserFormFields{{ one_orga.name }}{{ user.name }}" class="edit-user-form-fields">
+                                                    <div class="form-group">
+                                                        <label for="name_userorga">Nom de l'utilisateur</label>
+                                                        <input type="text" name="editname_userorga" class="form-control"
+                                                        value="{{ user.name }}"
+                                                        required>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="role_userorga">Rôle(s) de l'utilisateur</label>
+                                                        <input type="text" name="editrole_userorga" class="form-control" 
+                                                        value="{{ user.role|join(',') }}"
+                                                        required>
+                                                    </div>
+                                                    <div class="form-group button-submit">
+                                                        <button type="submit" id="editUserFormButton{{ one_orga.name }}{{ user.name }}" class="edit-user-form-button" data-organame="{{ one_orga.name }}" data-username="{{ user.name }}">Modifier</button>
+                                                        <a title="Delete the user" id="deleteUser" class="delete-user delete-user{{ user.name }}"
+                                                        data-organame="{{ one_orga.name }}"
+                                                        data-username="{{ user.name }}"
+                                                        onclick="return confirm('Are you sure?');">
+                                                            Supprimer
+                                                        </a>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endfor %}
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Modal Add Orga-->
+    <div class="modal fade step-modal" id="addOrga" tabindex="-1" role="dialog" aria-labelledby="addOrgaLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addOrgaLabel">Ajouter une organisation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+                   <form action="{{ path ('addOrga') }}" method="post">
+                        <input type="hidden" name="token" value="{{ csrf_token('addOrga') }}"/>
+                        <div class="form-group">
+                            <label for="name_orga">Nom de l'organisation</label>
+                            <input type="text" id="name_orga" name="name_orga" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description_orga">Description de l'organisation</label>
+                            <textarea name="description_orga" id="description_orga" class="form-control" required></textarea>
+                        </div>
+                        <div class="form-group button-submit">
+                            <button type="submit">Ajouter</button>
+                        </div>
+                   </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    <script type="text/javascript" src="{{ asset ('js/bootstrap.js') }}"></script>
+    <script type="text/javascript" src="{{ asset ('js/yamlHandleAjax.js') }}"></script>
+{% endblock %}

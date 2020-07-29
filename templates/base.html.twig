@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <script src="//img01.bt.co.uk/s/assets/sport/js/libs/jquery/1.10.2/jquery-1.10.2.min.js"></script>
+        {% block stylesheets %}
+            <link rel="stylesheet" type="text/css" href="{{ asset ('css/bootstrap.css') }}">
+            <link rel="stylesheet" type="text/css" href="{{ asset ('css/style.css') }}">
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" 
+            integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous">
+        {% endblock %}
+    </head>
+    <body>
+        {% block body %}{% endblock %}
+        {% block javascripts %}{% endblock %}
+    </body>
+    <footer>
+        <p>Test réalisé par Lemaitre Maxence</p>
+    </footer>
+</html>
