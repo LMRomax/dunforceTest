@@ -1,4 +1,4 @@
- {{ form_start(editOrganizationForm, {'method': 'POST'}) }}
+ {{ form_start(editOrganizationForm, {'action': path('editOrganization', {'name': organization.name}), 'method': 'POST'}) }}
     
     <div class="form-group">
         <label for="name_orga">{{ form_label(editOrganizationForm.name_organization) }}</label>

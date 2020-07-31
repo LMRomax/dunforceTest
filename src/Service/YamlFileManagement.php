@@ -20,11 +20,11 @@ class YamlFileManagement
     }
 
     // Function to edit an Organization in organizations.yaml
-    public function editOrganization($name, $description) {
+    public function editOrganization($name_url_parameter, $name, $description) {
         $organizations_yaml = Yaml::parseFile('organizations.yaml'); 
 
         foreach($organizations_yaml['organizations'] as $key => $organization) {
-            if($organization['name'] == $name) {
+            if($organization['name'] == $name_url_parameter) {
                 $organizations_yaml['organizations'][$key]['name'] = $name;
                 $organizations_yaml['organizations'][$key]['description'] = $description;
             }

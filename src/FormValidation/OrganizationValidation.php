@@ -20,7 +20,7 @@
     
             $violations = $validator->validate($data, $constraints);
 
-            if(!empty($violations)) {
+            if(count($violations) > 0) {
                 return $violations;
             }
             else {

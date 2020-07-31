@@ -122,70 +122,53 @@ class YamlHandleController extends AbstractController
     }
 
     /**
-     * @Route("/edit-orga/{name}", name="editOrganization", methods={"POST"})
+     * @Route("/edit-organization/{name}", name="editOrganization", methods={"POST"})
      */
-    public function editOrganization($name, Request $request, OrganizationValidation $organization_validation)
+    public function editOrganization($name, Request $request, YamlFileManagement $yaml_file_management, OrganizationValidation $organization_validation)
     {
-        $token = $request->request->get("token");
+        //Put the name parameter into a variable
+        $name_url_parameter = $name;
 
-        if($this->isCsrfTokenValid('editOrga', $token)) {
+        //Handle request of addOrganization form
+        $edit_organization_form = $this->createForm(EditOrganizationType::class);
+        $edit_organization_form->handleRequest($request);
 
-            $organizations = Yaml::parseFile('organizations.yaml'); 
+        //Get the data of the form
+        $edit_organization_form_data = $edit_organization_form->getData();
 
-            $name = $request->request->get("editname_orga");
-            $description = $request->request->get("editdescription_orga");
-    
-            $input = ['editname_orga' => $name, 'editdescription_orga' => $description];
-    
-            $constraints = new Assert\Collection([
-                'editname_orga' => [new Assert\Type('string'), new Assert\NotBlank],
-                'editdescription_orga' => [new Assert\Type('string'), new Assert\notBlank, new Assert\Length(['max' => 512])],
-            ]);
-    
-            $violations = $validator->validate($input, $constraints);
+        //To simplify, we put the value in this variable
+        $name_organization = $edit_organization_form_data['name_organization'];
+        $description_organization = $edit_organization_form_data['description_organization'];
 
-            if (count($violations) > 0) { 
-                $errorMessages = array();
+        //Validation of the form
+        $validation = $organization_validation->validation($name_organization, $description_organization);
 
-                foreach ($violations as $violation) {
-                    $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
-                }
+        //If the form is Submitted and the validation is ok
+        if($edit_organization_form->isSubmitted() && $validation === true) {
 
-                /*dump($errorMessages);
-                die();*/
+            //Call function editOrganization who add the organization in the yaml file.
+            // We need to pass the parameter of the url to do the operation
+            $yaml_file_management->editOrganization($name_url_parameter, $name_organization, $description_organization);
 
-                $this->addFlash(
-                    'Error',
-                    $errorMessages
-                );
-
-                return $this->redirectToRoute('Index');
-            }
-            else {
-
-                foreach($organizations['organizations'] as $key => $organization) {
-                    if($organization['name'] == $name) {
-                        $organizations['organizations'][$key]['name'] = $input['editname_orga'];
-                        $organizations['organizations'][$key]['description'] = $input['editdescription_orga'];
-                    }
-                }
-        
-                $yaml = Yaml::dump($organizations);    
-        
-                file_put_contents('organizations.yaml', $yaml);
-        
-                return $this->redirectToRoute('Index');
-            }
-        }
+            return $this->redirectToRoute('Index');
+        } // If validation === false, we create an array of error and create a flash message for the user
         else {
+            // Init the array
+            $errorMessages = array();
+
+            //Put the messages in the array
+            foreach ($validation as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            //Create the Flash message
             $this->addFlash(
                 'Error',
-                'A problem has occured with the CSRF Token'
+                $errorMessages
             );
 
             return $this->redirectToRoute('Index');
         }
-
     }
 
     /**
