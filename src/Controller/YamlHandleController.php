@@ -4,7 +4,11 @@ namespace App\Controller;
 
 use dump;
 use Symfony\Component\Yaml\Yaml;
+use App\Form\AddOrganizationType;
+use App\Form\EditOrganizationType;
+use App\Service\YamlFileManagement;
 use Symfony\Component\HttpFoundation\Request;
+use App\FormValidation\OrganizationValidation;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,85 +24,107 @@ class YamlHandleController extends AbstractController
      */
     public function index()
     {
+        //Get the organizations from the yaml file 
         $organizations = Yaml::parseFile('organizations.yaml');
+
+        /* form add Organization  */
+        //Create the form
+        $add_organization_form = $this->createForm(AddOrganizationType::class);
+        //Render the form
+        $render_add_organization_form = $add_organization_form->createView();
+
+        /* form edit Organization  */
+        //Create the form
+        $edit_organization_form = $this->createForm(EditOrganizationType::class, $organizations);
+        //Render the form
+        $render_edit_organization_form = $edit_organization_form->createView();
 
         return $this->render('yaml_handle/index.html.twig', [
             'controller_name' => 'YamlHandleController',
             'organizations' => $organizations,
+            'addOrganizationForm' => $render_add_organization_form,
+            'editOrganizationForm' => $render_edit_organization_form
         ]);
     }
 
     /**
-     * @Route("/add-orga", name="addOrga")
+     * @Route("/edit-organization/modal/{name}", name="editOrganizationModal", methods={"GET"})
      */
-    public function addOrga(Request $request, ValidatorInterface $validator)
+    public function editOrganizationModal($name) // Display the content of the view in a modal
     {
-        $token = $request->request->get("token");
+        //Get the organizations from the yaml file 
+        $organizations = Yaml::parseFile('organizations.yaml');
 
-        if($this->isCsrfTokenValid('addOrga', $token)) {
-
-            $name = $request->request->get("name_orga");
-            $description = $request->request->get("description_orga");
-
-            $input = ['name_orga' => $name, 'description_orga' => $description];
-
-            $constraints = new Assert\Collection([
-                'name_orga' => [new Assert\Type('string'), new Assert\NotBlank],
-                'description_orga' => [new Assert\Type('string'), new Assert\notBlank, new Assert\Length(['max' => 512])],
-            ]);
-
-            $violations = $validator->validate($input, $constraints);
-
-            if (count($violations) > 0) { 
-
-                $errorMessages = array();
-
-                foreach ($violations as $violation) {
-                    $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
-                }
-
-                /*dump($errorMessages);
-                die();*/
-
-                $this->addFlash(
-                    'Error',
-                    $errorMessages
-                );
-
-                return $this->redirectToRoute('Index');
+        //We move in he array to find the row that match the parameter in the url
+        foreach($organizations['organizations'] as $key => $organization) {
+            if($organization['name'] === $name) {
+                $organization_selected = $organizations['organizations'][$key];
             }
-            else {
+        }
 
-                $organizations = Yaml::parseFile('organizations.yaml'); 
+        /* form edit Organization  */
+        //Create the form
+        $edit_organization_form = $this->createForm(EditOrganizationType::class, $organization_selected);
+        //Render the form
+        $render_edit_organization_form = $edit_organization_form->createView();
 
-                $new_organization = ['name' => $name, 'description' => $description, 'users' => [] ];
+        return $this->render('yaml_handle/edit.html.twig', [
+            'controller_name' => 'YamlHandleController',
+            'organization' => $organization_selected,
+            'editOrganizationForm' => $render_edit_organization_form
+        ]);
+    }
 
-                array_push($organizations["organizations"], $new_organization);
+    /**
+     * @Route("/add-organization", name="addOrganization", methods={"POST"})
+     */
+    public function addOrganization(Request $request, YamlFileManagement $yaml_file_management, OrganizationValidation $organization_validation)
+    {
+        //Handle request of addOrganization form
+        $add_organization_form = $this->createForm(AddOrganizationType::class);
+        $add_organization_form->handleRequest($request);
 
-                $yaml = Yaml::dump($organizations);    
+        //Get the data of the form
+        $add_organization_form_data = $add_organization_form->getData();
 
-                file_put_contents('organizations.yaml', $yaml);
+        //To simplify, we put the value in this variable
+        $name_organization = $add_organization_form_data['name_organization'];
+        $description_organization = $add_organization_form_data['description_organization'];
 
-                return $this->redirectToRoute('Index');
-            }
+        //Validation of the form
+        $validation = $organization_validation->validation($name_organization, $description_organization);
+
+        //If the form is Submitted and the validation is ok
+        if($add_organization_form->isSubmitted() && $validation === true) {
+
+            //Call function addOrganization who add the organization in the yaml file.
+            $yaml_file_management->addOrganization($name_organization, $description_organization);
 
             return $this->redirectToRoute('Index');
-        }
+        } // If validation === false, we create an array of error and create a flash message for the user
         else {
+            // Init the array
+            $errorMessages = array();
+
+            //Put the messages in the array
+            foreach ($validation as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            //Create the Flash message
             $this->addFlash(
                 'Error',
-                'A problem has occured with the CSRF Token'
+                $errorMessages
             );
 
             return $this->redirectToRoute('Index');
         }
-
     }
 
     /**
-     * @Route("/edit-orga/{name}", name="editOrga")
+     * @Route("/edit-orga/{name}", name="editOrganization", methods={"POST"})
      */
-    public function editOrga($name, Request $request, ValidatorInterface $validator)
+    public function editOrganization($name, Request $request, OrganizationValidation $organization_validation)
     {
         $token = $request->request->get("token");
 
@@ -163,7 +189,7 @@ class YamlHandleController extends AbstractController
     }
 
     /**
-     * @Route("/delete-orga/{name}", name="deleteOrga")
+     * @Route("/delete-orga/{name}", name="deleteOrganization")
      */
     public function deleteOrga($name, Request $request, ValidatorInterface $validator)
     {

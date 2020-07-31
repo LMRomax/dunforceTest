@@ -1,0 +1,17 @@
+ {{ form_start(editOrganizationForm, {'method': 'POST'}) }}
+    
+    <div class="form-group">
+        <label for="name_orga">{{ form_label(editOrganizationForm.name_organization) }}</label>
+        {{ form_widget(editOrganizationForm.name_organization, {'value': editOrganizationForm.vars.value.name, 'attr': {'class': 'form-control'}}) }}
+    </div>
+
+    <div class="form-group">
+        <label for="name_orga">{{ form_label(editOrganizationForm.description_organization) }}</label>
+        {{ form_widget(editOrganizationForm.description_organization, {'value': editOrganizationForm.vars.value.description, 'attr': {'class': 'form-control'}}) }}
+    </div>
+
+    <div class="form-group button-submit">
+        {{ form_widget(editOrganizationForm.add, {'label': 'Ajouter' }) }}
+    </div>
+
+{{ form_end(editOrganizationForm) }}
