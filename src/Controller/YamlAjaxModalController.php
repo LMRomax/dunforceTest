@@ -32,7 +32,7 @@ class YamlAjaxModalController extends AbstractController
         //Render the form
         $render_edit_organization_form = $edit_organization_form->createView();
 
-        return $this->render('yaml_handle/editorganization.html.twig', [
+        return $this->render('yaml_ajax_modal/editorganization.html.twig', [
             'controller_name' => 'YamlAjaxModalController',
             'organization' => $organization_selected,
             'editOrganizationForm' => $render_edit_organization_form
@@ -60,7 +60,7 @@ class YamlAjaxModalController extends AbstractController
         //Render the form
         $render_add_user_form = $add_user_form->createView();
 
-        return $this->render('yaml_handle/adduser.html.twig', [
+        return $this->render('yaml_ajax_modal/adduser.html.twig', [
             'controller_name' => 'YamlAjaxModalController',
             'organization' => $organization_selected,
             'addUserForm' => $render_add_user_form
@@ -82,7 +82,7 @@ class YamlAjaxModalController extends AbstractController
             }
         }
 
-        return $this->render('yaml_handle/listusers.html.twig', [
+        return $this->render('yaml_ajax_modal/listusers.html.twig', [
             'controller_name' => 'YamlAjaxModalController',
             'organization' => $organization_selected
         ]);
@@ -114,7 +114,7 @@ class YamlAjaxModalController extends AbstractController
         //Render the form
         $render_edit_user_form = $edit_user_form->createView();
 
-        return $this->render('yaml_handle/editusers.html.twig', [
+        return $this->render('yaml_ajax_modal/editusers.html.twig', [
             'controller_name' => 'YamlAjaxModalController',
             'organization' => $organization_selected,
             'user' => $user_selected,

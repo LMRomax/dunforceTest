@@ -188,7 +188,7 @@ class YamlHandleController extends AbstractController
             // We decode the result to parse the value to listuser view
             $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
 
-            return $this->render('yaml_handle/listusers.html.twig', [
+            return $this->render('yaml_ajax_modal/listusers.html.twig', [
                 'controller_name' => 'YamlHandleController',
                 'organization' => $yaml_update_result_decode['Organization']
             ]);
@@ -246,7 +246,7 @@ class YamlHandleController extends AbstractController
             // We decode the result to parse the value to listuser view
             $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
 
-            return $this->render('yaml_handle/listusers.html.twig', [
+            return $this->render('yaml_ajax_modal/listusers.html.twig', [
                 'controller_name' => 'YamlHandleController',
                 'organization' => $yaml_update_result_decode['Organization']
             ]);
@@ -285,7 +285,7 @@ class YamlHandleController extends AbstractController
         // We decode the result to parse the value to listuser view
         $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
 
-        return $this->render('yaml_handle/listusers.html.twig', [
+        return $this->render('yaml_ajax_modal/listusers.html.twig', [
             'controller_name' => 'YamlHandleController',
             'organization' => $yaml_update_result_decode['Organization']
         ]);
