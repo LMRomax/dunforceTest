@@ -14,8 +14,9 @@
             </a>
         </div>
 
-       {% for messages in app.flashes('Error') %}
-            {% for key, message in messages %}
+        <!-- Display the errors messages of the submitting form -->
+        {% for messagesErrors in app.flashes('Error') %}
+            {% for key, message in messagesErrors %}
                 <div class="error-form">
                     <span class="invalid-feedback" role="alert">
                         <i class="fas fa-exclamation-circle"></i>
@@ -26,6 +27,7 @@
             {% endfor %}
         {% endfor %}
 
+        <!-- Table of the organizations -->
         <table>
             {% for list_organizations in organizations %}
                 {% for organization in list_organizations %}
@@ -35,106 +37,27 @@
                         <td>
                             <div class="link_modification">
                                 <a title="Edit the organization" href="javascript:void(0);" id="editOrganization" class="editOrga" 
-                                data-target="{{ path('editOrganizationModal', {'name': organization.name}) }}">
+                                data-target="{{ path('editOrganizationModal', {'name_organization': organization.name}) }}">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a title="List of users" href="javascript:void(0);" id="usersOrga" data-organame="{{ organization.name }}" data-toggle="modal" data-target="#usersOrga{{ organization.name }}">
+                                <a title="List of users" href="javascript:void(0);" id="usersOrganization" 
+                                data-target="{{ path('addUserModal', {'name_organization': organization.name}) }}" 
+                                data-listusers="{{ path('listUserModal', {'name_organization': organization.name}) }}" 
+                                data-toggle="modal" data-target="#usersOrga">
                                     <i class="fas fa-users"></i>
                                 </a>
-                                <a title="Delete the organization" href="{{ path('deleteOrganization', {'name': organization.name}) }}" id="deleteOrga" onclick="return confirm('Are you sure?');">
+                                <a title="Delete the organization" href="{{ path('deleteOrganization', {'name_organization': organization.name}) }}" id="deleteOrga" onclick="return confirm('Are you sure?');">
                                     <i class="fas fa-times"></i>
                                 </a>
                             </div>
                         </td>
                     </tr>
-
-                    <!-- Modal Users Orga-->
-                    <div class="modal fade step-modal" id="usersOrga{{ organization.name }}" tabindex="0" role="dialog" aria-labelledby="usersOrgaLabel{{ organization.name }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-users" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="usersOrgaLabel{{ organization.name }}">Gestion des Utilisateurs</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        &times;
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-
-                                    <div class="errors-ajax" style="display: none;">
-                                        <span class="invalid-feedback errors-ajax-invalid-feedback" role="alert"></span>
-                                    </div>
-
-                                    <div id="formAddUser" class="form-adduser" {% if organization.users is empty %} style="display: block;" {% endif %}>
-                                        <form id="addUserFormFields{{ organization.name }}" class="add-user-form-fields" method="post" data-organame="{{ organization.name }}">
-                                            <input type="hidden" name="token" value="{{ csrf_token('addUser') }}"/>
-                                            <div class="form-group">
-                                                <label for="name_userorga">Nom de l'utilisateur</label>
-                                                <input type="text" name="name_userorga" class="form-control"required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="role_userorga">Rôle(s) de l'utilisateur</label>
-                                                <input type="text" name="role_userorga" class="form-control" placeholder="ADMIN,CEO" required>
-                                            </div>
-                                            <div class="form-group button-submit">
-                                                <a href="javascript:void(0);" id="cancelAddUser" class="cancel-action">Annuler</a>
-                                                <button type="submit">Ajouter</button>
-                                            </div>
-                                        </form>
-                                    </div>
-
-                                    <div id="listUserOrga" class="list-usersorga list-usersorga{{ organization.name }}" {% if organization.users is not empty %} style="display: block;" {% endif %}>
-                                        {% if organization.users is not empty %}
-                                            <div class="user-form">
-                                                <strong>Utilisateurs de {{ organization.name }}</strong>
-                                                <div class="user-addorga">
-                                                    <a href="javascript:void(0);" id="addUserFormDisplayed">
-                                                        Ajouter un utilisateur
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                        {% for user in organization.users %}
-                                            <div id="oneUser{{ organization.name }}{{ user.name }}" class="oneuser-orga">
-                                                <h5>
-                                                    <strong id="nameUserTitle{{ organization.name }}{{ user.name }}">{{ user.name }}</strong>
-                                                </h5>
-                                                <form method="post" id="editUserFormFields{{ organization.name }}{{ user.name }}" class="edit-user-form-fields">
-                                                    <div class="form-group">
-                                                        <label for="name_userorga">Nom de l'utilisateur</label>
-                                                        <input type="text" name="editname_userorga" class="form-control"
-                                                        value="{{ user.name }}"
-                                                        required>
-                                                    </div>
-                                                    <div class="form-group">
-                                                        <label for="role_userorga">Rôle(s) de l'utilisateur</label>
-                                                        <input type="text" name="editrole_userorga" class="form-control" 
-                                                        value="{{ user.role|join(',') }}"
-                                                        required>
-                                                    </div>
-                                                    <div class="form-group button-submit">
-                                                        <button type="submit" id="editUserFormButton{{ organization.name }}{{ user.name }}" class="edit-user-form-button" data-organame="{{ organization.name }}" data-username="{{ user.name }}">Modifier</button>
-                                                        <a title="Delete the user" id="deleteUser" class="delete-user delete-user{{ user.name }}"
-                                                        data-organame="{{ organization.name }}"
-                                                        data-username="{{ user.name }}"
-                                                        onclick="return confirm('Are you sure?');">
-                                                            Supprimer
-                                                        </a>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 {% endfor %}
             {% endfor %}
         </table>
     </div>
 
-    <!-- Modal Add Orga-->
+    <!-- Modal Form Add Orga-->
     <div class="modal fade step-modal" id="addOrga" tabindex="-1" role="dialog" aria-labelledby="addOrgaLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -148,12 +71,12 @@
                     {{ form_start(addOrganizationForm, {'action': path('addOrganization'), 'method': 'POST'}) }}
 
                         <div class="form-group">
-                            <label for="name_orga">{{ form_label(addOrganizationForm.name_organization) }}</label>
+                            <label for="name_organization">{{ form_label(addOrganizationForm.name_organization) }}</label>
                             {{ form_widget(addOrganizationForm.name_organization, {'attr': {'class': 'form-control'}}) }}
                         </div>
 
                          <div class="form-group">
-                            <label for="name_orga">{{ form_label(addOrganizationForm.description_organization) }}</label>
+                            <label for="description_organization">{{ form_label(addOrganizationForm.description_organization) }}</label>
                             {{ form_widget(addOrganizationForm.description_organization, {'attr': {'class': 'form-control'}}) }}
                         </div>
 
@@ -167,7 +90,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Orga-->
+    <!-- Modal Form Edit Orga-->
     <div class="modal fade step-modal" id="editOrga" tabindex="-1" role="dialog" aria-labelledby="editOrgaLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -179,6 +102,57 @@
                 </div>
                 <div id="modalBodyEdit" class="modal-body">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal list Users + Form Add User per Organization -->
+    <div class="modal fade step-modal" id="usersOrga" tabindex="0" role="dialog" aria-labelledby="usersOrgaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-users" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="usersOrgaLabel">Gestion des Utilisateurs</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        &times;
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="errors-ajax" style="display: none;">
+                        <span class="invalid-feedback errors-ajax-invalid-feedback" role="alert"></span>
+                    </div>
+
+                    <div id="formAddUser" class="form-adduser">
+                    </div>
+
+                    <div id="listUserOrga" class="list-usersorga">
+                       <div class="user-form">
+                            <strong id="titleUserOrganization"></strong>
+                            <div class="user-addorga">
+                                <!-- Button to display the Form to Add an user on the organization -->
+                                <a href="javascript:void(0);" id="addUserFormDisplayed">
+                                    Ajouter un utilisateur
+                                </a>
+                            </div>
+                        </div>
+                        <div id="oneUser" class="oneuser-orga"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form Edit Users -->
+    <div class="modal fade step-modal" id="editUsersOrganization" tabindex="1" role="dialog" aria-labelledby="editUsersOrganizationLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-users" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUsersOrganizationLabel">Modifier un utilisateur</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        &times;
+                    </button>
+                </div>
+                <div id="editUserForm" class="modal-body"></div>
             </div>
         </div>
     </div>

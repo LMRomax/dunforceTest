@@ -7,19 +7,18 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 
-class EditOrganizationType extends AbstractType
+class EditUserType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('name_organization', TextType::class, array(
-                'label' => 'Nom de l\'organisation',
+            ->add('name_user', TextType::class, array(
+                'label' => 'Nom de l\'utilisateur',
                 'required' => true
             ))
-            ->add('description_organization', TextareaType::class, array(
-                'label' => 'Description de l\'organisation',
+            ->add('roles_user', TextType::class, array(
+                'label' => 'Rôle(s) de l\'utilisateur',
                 'required' => true
             ))
             ->add('edit', SubmitType::class)

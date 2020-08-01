@@ -1,0 +1,31 @@
+
+{% for user in organization['users'] %}
+    <div class="oneuser-orga-inner">
+        <h5>
+            <strong id="nameUserTitle">{{ user.name }}</strong>
+        </h5>
+
+        <div class="roles-user">
+            <h6>
+                <strong id="nameUserTitle">Rôle(s) : </strong>
+            </h6>
+            <ul>
+                {% for role in user.role %}
+                    <li>{{ role }}</li> 
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="form-group button-submit">
+            <a title="Edit the user" href="javascript:void(0);" id="editUserModal" 
+            data-target="{{ path('editUserModal', {'name_organization': organization.name, 'name_user': user.name}) }}",
+            data-listuser="{{ path('listUserModal', {'name_organization': organization.name}) }}"
+            data-toggle="modal"
+            class="edit-user-modal-form-button">Modifier</button>
+            <a title="Delete the user" id="deleteUser" class="delete-user delete-user"
+            data-target="{{ path('deleteUser', {'name_organization': organization.name, 'name_user': user.name}) }}"
+            onclick="return confirm('Are you sure?');">
+                Supprimer
+            </a>
+        </div>
+    </div>
+{% endfor %}

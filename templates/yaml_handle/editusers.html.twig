@@ -1,0 +1,24 @@
+<div class="errors-ajax" style="display: none;">
+    <span class="invalid-feedback errors-ajax-invalid-feedback" role="alert"></span>
+</div>
+
+{{ form_start(editUserForm, {'method': 'POST', 'attr': {'id': 'edit_user_form'}}) }}
+
+    <div class="form-group">
+        <label for="name_user">{{ form_label(editUserForm.name_user) }}</label>
+        {{ form_widget(editUserForm.name_user, {'value': editUserForm.vars.value.name, 'attr': {'class': 'form-control'}}) }}
+    </div>
+
+    <div class="form-group">
+        <label for="roles_user">{{ form_label(editUserForm.roles_user) }}</label>
+        {{ form_widget(editUserForm.roles_user, {'value': editUserForm.vars.value.role|join(','), 'attr': {'class': 'form-control'}}) }}
+    </div>
+
+    <div class="form-group button-submit">
+        {{ form_widget(editUserForm.edit, {'label': 'Modifier', 
+        'attr': {'class': 'edit-user-form-button', 
+        'data-target': path('editUser', {'name_organization': organization.name, 'name_user': user.name})
+        }}) }}
+    </div>
+
+{{ form_end(editUserForm) }}

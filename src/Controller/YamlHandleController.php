@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use dump;
+use App\Form\AddUserType;
+use App\Form\EditUserType;
 use Symfony\Component\Yaml\Yaml;
 use App\Form\AddOrganizationType;
 use App\Form\EditOrganizationType;
 use App\Service\YamlFileManagement;
+use App\FormValidation\UserValidation;
 use Symfony\Component\HttpFoundation\Request;
 use App\FormValidation\OrganizationValidation;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,7 +28,7 @@ class YamlHandleController extends AbstractController
     public function index()
     {
         //Get the organizations from the yaml file 
-        $organizations = Yaml::parseFile('organizations.yaml');
+        $organizations_yaml = Yaml::parseFile('organizations.yaml');
 
         /* form add Organization  */
         //Create the form
@@ -33,45 +36,10 @@ class YamlHandleController extends AbstractController
         //Render the form
         $render_add_organization_form = $add_organization_form->createView();
 
-        /* form edit Organization  */
-        //Create the form
-        $edit_organization_form = $this->createForm(EditOrganizationType::class, $organizations);
-        //Render the form
-        $render_edit_organization_form = $edit_organization_form->createView();
-
         return $this->render('yaml_handle/index.html.twig', [
             'controller_name' => 'YamlHandleController',
-            'organizations' => $organizations,
-            'addOrganizationForm' => $render_add_organization_form,
-            'editOrganizationForm' => $render_edit_organization_form
-        ]);
-    }
-
-    /**
-     * @Route("/edit-organization/modal/{name}", name="editOrganizationModal", methods={"GET"})
-     */
-    public function editOrganizationModal($name) // Display the content of the view in a modal
-    {
-        //Get the organizations from the yaml file 
-        $organizations = Yaml::parseFile('organizations.yaml');
-
-        //We move in he array to find the row that match the parameter in the url
-        foreach($organizations['organizations'] as $key => $organization) {
-            if($organization['name'] === $name) {
-                $organization_selected = $organizations['organizations'][$key];
-            }
-        }
-
-        /* form edit Organization  */
-        //Create the form
-        $edit_organization_form = $this->createForm(EditOrganizationType::class, $organization_selected);
-        //Render the form
-        $render_edit_organization_form = $edit_organization_form->createView();
-
-        return $this->render('yaml_handle/edit.html.twig', [
-            'controller_name' => 'YamlHandleController',
-            'organization' => $organization_selected,
-            'editOrganizationForm' => $render_edit_organization_form
+            'organizations' => $organizations_yaml,
+            'addOrganizationForm' => $render_add_organization_form
         ]);
     }
 
@@ -91,7 +59,7 @@ class YamlHandleController extends AbstractController
         $name_organization = $add_organization_form_data['name_organization'];
         $description_organization = $add_organization_form_data['description_organization'];
 
-        //Validation of the form
+        //Validation of the form, validation class are in App\FormValidation
         $validation = $organization_validation->validation($name_organization, $description_organization);
 
         //If the form is Submitted and the validation is ok
@@ -122,12 +90,12 @@ class YamlHandleController extends AbstractController
     }
 
     /**
-     * @Route("/edit-organization/{name}", name="editOrganization", methods={"POST"})
+     * @Route("/edit-organization/{name_organization}", name="editOrganization", methods={"POST"})
      */
-    public function editOrganization($name, Request $request, YamlFileManagement $yaml_file_management, OrganizationValidation $organization_validation)
+    public function editOrganization($name_organization, Request $request, YamlFileManagement $yaml_file_management, OrganizationValidation $organization_validation)
     {
         //Put the name parameter into a variable
-        $name_url_parameter = $name;
+        $name_organization_url_parameter = $name_organization;
 
         //Handle request of addOrganization form
         $edit_organization_form = $this->createForm(EditOrganizationType::class);
@@ -140,15 +108,15 @@ class YamlHandleController extends AbstractController
         $name_organization = $edit_organization_form_data['name_organization'];
         $description_organization = $edit_organization_form_data['description_organization'];
 
-        //Validation of the form
+        //Validation of the form, validation class are in App\FormValidation
         $validation = $organization_validation->validation($name_organization, $description_organization);
 
         //If the form is Submitted and the validation is ok
         if($edit_organization_form->isSubmitted() && $validation === true) {
 
-            //Call function editOrganization who add the organization in the yaml file.
+            //Call function editOrganization who edit the organization in the yaml file.
             // We need to pass the parameter of the url to do the operation
-            $yaml_file_management->editOrganization($name_url_parameter, $name_organization, $description_organization);
+            $yaml_file_management->editOrganization($name_organization_url_parameter, $name_organization, $description_organization);
 
             return $this->redirectToRoute('Index');
         } // If validation === false, we create an array of error and create a flash message for the user
@@ -172,202 +140,155 @@ class YamlHandleController extends AbstractController
     }
 
     /**
-     * @Route("/delete-orga/{name}", name="deleteOrganization")
+     * @Route("/delete-orga/{name_organization}", name="deleteOrganization")
      */
-    public function deleteOrga($name, Request $request, ValidatorInterface $validator)
+    public function deleteOrga($name_organization, YamlFileManagement $yaml_file_management)
     {
-        $organizations = Yaml::parseFile('organizations.yaml'); 
+        //Put the name parameter into a variable
+        $name_organization_url_parameter = $name_organization;
 
-        foreach($organizations['organizations'] as $key => $organization) {
-            if($organization['name'] == $name) {
-                unset($organizations['organizations'][$key]);
-            }
-        }
-
-        $yaml = Yaml::dump($organizations);    
-
-        file_put_contents('organizations.yaml', $yaml);
+        //Call function deleteOrganization who delete the organization in the yaml file.
+        $yaml_file_management->deleteOrganization($name_organization_url_parameter);
 
         return $this->redirectToRoute('Index');
     }
 
     /**
-     * @Route("/add-user-orga/{name_orga}", name="addUser")
+     * @Route("/add-user-organization/{name_organization}", name="addUser",  methods={"POST"})
      */
-    public function addUser($name_orga, Request $request, ValidatorInterface $validator) {
+    public function addUser($name_organization, Request $request, UserValidation $user_validation, YamlFileManagement $yaml_file_management) {
+        
+        //Put the name parameter into a variable
+        $name_organization_url_parameter = $name_organization;
+
+        // Init the variable that will contain the response
         $response = new Response();
-        if($request->isXmlHttpRequest()){
-            $token = $request->request->get("token");
 
-            if($this->isCsrfTokenValid('addUser', $token)) {
-                $organizations = Yaml::parseFile('organizations.yaml'); 
+        //Handle request of addOrganization form
+        $add_user_form = $this->createForm(AddUserType::class);
+        $add_user_form->handleRequest($request);
 
-                $name = $request->request->get("name_userorga");
-                $roles = $request->request->get("role_userorga");
-    
-                $input = ['name_userorga' => $name, 'role_userorga' => $roles];
-        
-                $constraints = new Assert\Collection([
-                    'name_userorga' => [new Assert\Type('string'), new Assert\NotBlank],
-                    'role_userorga' => [new Assert\Type('string'), new Assert\notBlank],
-                ]);
-    
-                $violations = $validator->validate($input, $constraints);
+        //Get the data of the form
+        $add_user_form_data = $add_user_form->getData();
 
-                if (count($violations) > 0) { 
-                    $errorMessages = array();
+        //To simplify, we put the value in this variable
+        $name_user = $add_user_form_data['name_user'];
+        $roles_user = $add_user_form_data['roles_user'];
 
-                    foreach ($violations as $violation) {
-                        $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
-                    }
-    
-                    /*dump($errorMessages);
-                    die();*/
-    
-                    return new JsonResponse([
-                        'errors' => $errorMessages
-                    ], 500);
-                }
-                else {
-                    $array_roles = explode(',', $roles);
+        //Validation of the form, validation class are in App\FormValidation
+        $validation = $user_validation->validation($name_user, $roles_user);
 
-                    foreach($organizations['organizations'] as $key => $organization) {
-                        if($organization['name'] == $name_orga) {
-                            $new_user =  [
-                                'name' => $name, 
-                                'role' => array_values($array_roles),
-                                'password' => bin2hex(random_bytes(10))
-                            ];
+        //If the form is Submitted and the validation is ok
+        if($add_user_form->isSubmitted() && $validation === true) {
 
-                            array_push($organizations['organizations'][$key]['users'], $new_user);
-                        }
-                    }
+            //Call function addUser who add the user of the organization in the yaml file.
+            // We need to pass the parameter of the url to do the operation
+            $yaml_update_result = $yaml_file_management->addUser($name_organization_url_parameter, $name_user, $roles_user);
 
-                    $yaml = Yaml::dump($organizations);    
-        
-                    file_put_contents('organizations.yaml', $yaml);
+            // We decode the result to parse the value to listuser view
+            $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
 
-                    return new JsonResponse([
-                        'Organizations' => $organizations
-                    ], 200);
-                }
-            }
-            else {
-                return new JsonResponse([
-                    'error' => 'An error occured with the CSRF Token'
-                ], 500);
-            }
-        }
-        else {
-            return new JsonResponse([
-                'error' => 'An error occured'
-            ], 500);
-        }
-    }
-
-        /**
-     * @Route("/edit-user-orga/{name_orga}/{user_name}", name="editUser")
-     */
-    public function editUser($name_orga, $user_name, Request $request, ValidatorInterface $validator) {
-        $response = new Response();
-        
-        if($request->isXmlHttpRequest()){
-
-            $organizations = Yaml::parseFile('organizations.yaml'); 
-
-            $name = $request->request->get("editname_userorga");
-            $roles = $request->request->get("editrole_userorga");
-
-            $input = ['name_userorga' => $name, 'role_userorga' => $roles];
-    
-            $constraints = new Assert\Collection([
-                'name_userorga' => [new Assert\Type('string'), new Assert\NotBlank],
-                'role_userorga' => [new Assert\Type('string'), new Assert\notBlank],
+            return $this->render('yaml_handle/listusers.html.twig', [
+                'controller_name' => 'YamlHandleController',
+                'organization' => $yaml_update_result_decode['Organization']
             ]);
-
-            $violations = $validator->validate($input, $constraints);
-
-            if (count($violations) > 0) { 
-                $errorMessages = array();
-
-                foreach ($violations as $violation) {
-                    $errorMessages[$violation->getPropertyPath()] = $violation->getMessage();
-                }
-
-                /*dump($errorMessages);
-                die();*/
-
-                return new JsonResponse([
-                    'errors' => $errorMessages
-                ], 500);
-            }
-            else {
-                $array_roles = explode(',', $roles);
-
-                foreach($organizations['organizations'] as $key => $organization) {
-                    if(array_search ($name_orga , $organization , $result_search = true)){
-                        foreach($organization['users'] as $user_key => $user) {
-                            if($user['name'] == $user_name) {
-                                $organizations['organizations'][$key]['users'][$user_key]['name'] = $input['name_userorga'];
-                                $organizations['organizations'][$key]['users'][$user_key]['role'] = array_values($array_roles);
-                                $user_orga = $organizations['organizations'][$key]['users'][$user_key];
-                            }
-                        }
-                    }
-                    /*else {
-                        return new JsonResponse([
-                            'error' => array_search ($name_orga , $organization , $result_search = true)
-                        ], 500);
-                    }*/
-                }
-
-                $yaml = Yaml::dump($organizations);    
-    
-                file_put_contents('organizations.yaml', $yaml);
-
-                return new JsonResponse([
-                    'Organizations' => $user_orga,
-                ], 200);
-            }
-          
-        }
+        } // If validation === false, we create an array of error and create a flash message for the user
         else {
-            return new JsonResponse([
-                'error' => 'An error occured'
-            ], 500);   
+            // Init the array
+            $errorMessages = array();
+
+            //Put the messages in the array
+            foreach ($validation as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            }
+
+            //Create the Flash message
+            $this->addFlash(
+                'Error',
+                $errorMessages
+            );
+
+            return $this->redirectToRoute('Index');
         }
     }
 
     /**
-     * @Route("/delete-user-orga/{name_orga}/{user_name}", name="deleteUser")
+     * @Route("/edit-user-orga/{name_organization}/{name_user}", name="editUser")
      */
-    public function deleteUser($name_orga, $user_name, Request $request, ValidatorInterface $validator) {
-        if($request->isXmlHttpRequest()){
-            $organizations = Yaml::parseFile('organizations.yaml'); 
+    public function editUser($name_organization, $name_user, Request $request, YamlFileManagement $yaml_file_management, UserValidation $user_validation) {
+        //Put the name parameter into a variable
+        $name_organization_url_parameter = $name_organization;
+        $name_user_url_parameter = $name_user;
 
-            foreach($organizations['organizations'] as $key => $organization) {
-                if($organization['name'] == $name_orga) {
-                    foreach($organization['users'] as $user_key => $user) {
-                        if($user['name'] == $user_name) {
-                            unset($organizations['organizations'][$key]['users'][$user_key]);
-                        }
-                    }
-                }
+        // Init the variable that will contain the response
+        $response = new Response();
+
+        //Handle request of addOrganization form
+        $edit_user_form = $this->createForm(EditUserType::class);
+        $edit_user_form->handleRequest($request);
+
+        //Get the data of the form
+        $edit_user_form_data = $edit_user_form->getData();
+
+        //To simplify, we put the value in this variable
+        $name_user = $edit_user_form_data['name_user'];
+        $roles_user = $edit_user_form_data['roles_user'];
+
+        //Validation of the form, validation class are in App\FormValidation
+        $validation = $user_validation->validation($name_user, $roles_user);
+
+        //If the form is Submitted and the validation is ok
+        if($edit_user_form->isSubmitted() && $validation === true) {
+
+            //Call function editUser who edit the user the organization in the yaml file.
+            // We need to pass the parameter of the url to do the operation
+            $yaml_update_result = $yaml_file_management->editUser($name_organization_url_parameter, $name_user_url_parameter, $name_user, $roles_user);
+            // We decode the result to parse the value to listuser view
+            $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
+
+            return $this->render('yaml_handle/listusers.html.twig', [
+                'controller_name' => 'YamlHandleController',
+                'organization' => $yaml_update_result_decode['Organization']
+            ]);
+        } // If validation === false, we create an array of error and create a flash message for the user
+        else {
+            // Init the array
+            $errorMessages = array();
+
+            //Put the messages in the array
+            foreach ($validation as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
             }
 
-            $yaml = Yaml::dump($organizations);    
-        
-            file_put_contents('organizations.yaml', $yaml);
+            //Create the Flash message
+            $this->addFlash(
+                'Error',
+                $errorMessages
+            );
 
-            return new JsonResponse([
-                'success' => 'User deleted'
-            ], 200); 
+            return $this->redirectToRoute('Index');
         }
-        else {
-            return new JsonResponse([
-                'error' => 'An error occured'
-            ], 500);     
-        }
+    }
+
+    /**
+     * @Route("/delete-user-orga/{name_organization}/{name_user}", name="deleteUser")
+     */
+    public function deleteUser($name_organization, $name_user, Request $request, YamlFileManagement $yaml_file_management) {
+        //Put the name parameter into a variable
+        $name_organization_url_parameter = $name_organization;
+        $name_user_url_parameter = $name_user;
+
+        //Call function deleteUser who delete the user of the organization in the yaml file.
+        // We need to pass the parameter of the url to do the operation
+        $yaml_update_result = $yaml_file_management->deleteUser($name_organization_url_parameter, $name_user_url_parameter);
+
+        // We decode the result to parse the value to listuser view
+        $yaml_update_result_decode = json_decode($yaml_update_result->getContent(), true);
+
+        return $this->render('yaml_handle/listusers.html.twig', [
+            'controller_name' => 'YamlHandleController',
+            'organization' => $yaml_update_result_decode['Organization']
+        ]);
     }
 
 }
