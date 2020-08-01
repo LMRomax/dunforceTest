@@ -22,8 +22,7 @@
             data-toggle="modal"
             class="edit-user-modal-form-button">Modifier</button>
             <a title="Delete the user" id="deleteUser" class="delete-user delete-user"
-            data-target="{{ path('deleteUser', {'name_organization': organization.name, 'name_user': user.name}) }}"
-            onclick="return confirm('Are you sure?');">
+            data-target="{{ path('deleteUser', {'name_organization': organization.name, 'name_user': user.name}) }}">
                 Supprimer
             </a>
         </div>
